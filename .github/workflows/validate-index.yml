@@ -104,7 +104,10 @@ jobs:
         run: |
           set -euo pipefail
           FAILED=0
-          for row in $(jq -c '.plugins[]' index.json); do
+          # Iterate via `while read` (NOT `for in $(...)`) so we don't word-split
+          # the JSON on spaces inside description/displayName fields.
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
             ID=$(echo "$row" | jq -r .id)
             REF=$(echo "$row" | jq -r .ref)
             IDENT=$(echo "$row" | jq -r .trusted_identity)
@@ -137,5 +140,5 @@ jobs:
               continue
             fi
             echo "  ✓ verified"
-          done
+          done < <(jq -c '.plugins[]' index.json)
           test $FAILED -eq 0
