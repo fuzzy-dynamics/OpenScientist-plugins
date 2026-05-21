@@ -5,11 +5,11 @@
   "plugins": [
     {
       "id": "hello-world",
-      "publisher": "fuzzy-dynamics",
-      "ref": "ghcr.io/fuzzy-dynamics/osci-plugin-hello-world",
-      "trusted_identity": "https://github.com/fuzzy-dynamics/OSci-plugin-hello-world/.github/workflows/release.yml",
+      "publisher": "anvay-cmd",
+      "ref": "ghcr.io/anvay-cmd/osci-plugin-hello-world",
+      "trusted_identity": "https://github.com/anvay-cmd/osci-plugin-hello-world/.github/workflows/release.yml",
       "trusted_oidc_issuer": "https://token.actions.githubusercontent.com",
-      "repository_url": "https://github.com/fuzzy-dynamics/OSci-plugin-hello-world",
+      "repository_url": "https://github.com/anvay-cmd/osci-plugin-hello-world",
       "displayName": "Hello World",
       "description": "Reference plugin \u2014 guestbook showcasing every contribution surface and bridge API.",
       "tags": [
