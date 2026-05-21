@@ -1,7 +1,7 @@
 {
   "$schema": "./schema/index.schema.json",
   "version": 1,
-  "updated_at": "2026-05-21",
+  "updated_at": "2026-05-22",
   "plugins": [
     {
       "id": "hello-world",
@@ -16,6 +16,23 @@
         "reference",
         "example",
         "showcase"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "witsoc",
+      "publisher": "anvay-cmd",
+      "ref": "ghcr.io/anvay-cmd/osci-plugin-semiformal-math",
+      "trusted_identity": "https://github.com/anvay-cmd/osci-plugin-semiformal-math/.github/workflows/release.yml",
+      "trusted_oidc_issuer": "https://token.actions.githubusercontent.com",
+      "repository_url": "https://github.com/anvay-cmd/osci-plugin-semiformal-math",
+      "displayName": "Semiformal Math",
+      "description": "Structured semiformal proof system. Author .wit proofs, build LLM-ready verification contexts, persist receipts.",
+      "tags": [
+        "math",
+        "proof",
+        "verification",
+        "research"
       ],
       "license": "MIT"
     }
