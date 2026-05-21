@@ -40,6 +40,23 @@ The workflow:
 > `packages: write` (to push to ghcr.io) **and** `id-token: write` (to
 > request a Sigstore OIDC token). If either is missing, signing fails.
 
+### Make the OCI package public
+
+By default, ghcr.io packages created via Actions are **private**. The verified
+index can't reach private packages — flip it to public **once** per plugin:
+
+> Browser: `https://github.com/orgs/<you>/packages/container/<your-package>/settings`
+> Scroll to *Danger Zone* → *Change package visibility* → **Public**.
+
+CLI alternative (requires a token with `read:packages`/`write:packages`):
+```bash
+gh api --method PATCH \
+  /orgs/<you>/packages/container/<your-package>/visibility \
+  -f visibility=public
+```
+
+This is one-time per package. Future releases inherit public visibility.
+
 ### Verify your first release
 
 After your first tag push, your Action should succeed and you should see:
