@@ -84,8 +84,9 @@ jobs:
           sha256sum plugin.tar.gz config.json
 
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ${{ env.REGISTRY }} \
-             --username ${{ github.actor }} --password-stdin
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ${{ env.REGISTRY }} \
+            --username "${{ github.actor }}" --password-stdin
 
       - name: Push artifact (versioned + :latest)
         run: |

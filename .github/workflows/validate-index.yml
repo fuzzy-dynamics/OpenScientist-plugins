@@ -96,8 +96,9 @@ jobs:
       - uses: sigstore/cosign-installer@v3
 
       - name: Login to ghcr.io (read-only)
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
-             --username ${{ github.actor }} --password-stdin
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
 
       - name: Verify every entry's :latest is signed by the declared identity
         run: |
