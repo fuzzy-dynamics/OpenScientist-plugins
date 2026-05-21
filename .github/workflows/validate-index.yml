@@ -45,9 +45,13 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const Ajv = require('ajv').default;
+          // ajv@8 ships the draft-2020-12 meta-schema separately under dist/2020.
+          // The default export resolves draft-07 only and would throw
+          // `no schema with key or ref "https://json-schema.org/draft/2020-12/schema"`
+          // when our schemas declare $schema for 2020-12.
+          const Ajv2020 = require('ajv/dist/2020').default;
           const addFormats = require('ajv-formats').default;
-          const ajv = new Ajv({ allErrors: true, strict: false });
+          const ajv = new Ajv2020({ allErrors: true, strict: false });
           addFormats(ajv);
           const checks = [
             { schema: 'schema/index.schema.json',  data: 'index.json' },
