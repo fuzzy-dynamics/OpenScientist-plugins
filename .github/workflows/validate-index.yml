@@ -1,0 +1,136 @@
+# Validates index.json + yanked.json on every PR and push to main.
+#
+# What it checks:
+#   1. Both files parse as JSON.
+#   2. Both files validate against the JSON Schemas under schema/.
+#   3. Every plugin's `ref` is a reachable OCI repository (HEAD manifest of
+#      :latest returns 200).
+#   4. Every plugin's `:latest` signature verifies via cosign against the
+#      declared `trusted_identity` + OIDC issuer.
+#   5. No duplicate ids.
+#   6. yanked ids reference an id that exists (or existed) in index.json.
+#
+# Reviewers still have to read the README / icon / manifest content; this is
+# the mechanical layer.
+
+name: validate-index
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.json'
+      - 'yanked.json'
+      - 'schema/**'
+      - '.github/workflows/validate-index.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install validators
+        run: npm install --no-save ajv@8 ajv-formats@3
+
+      - name: JSON parse + schema validate
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const Ajv = require('ajv').default;
+          const addFormats = require('ajv-formats').default;
+          const ajv = new Ajv({ allErrors: true, strict: false });
+          addFormats(ajv);
+          const checks = [
+            { schema: 'schema/index.schema.json',  data: 'index.json' },
+            { schema: 'schema/yanked.schema.json', data: 'yanked.json' },
+          ];
+          let failed = false;
+          for (const { schema, data } of checks) {
+            const s = JSON.parse(fs.readFileSync(schema, 'utf-8'));
+            const d = JSON.parse(fs.readFileSync(data, 'utf-8'));
+            const validate = ajv.compile(s);
+            if (!validate(d)) {
+              console.error(`::error file=${data}::schema validation failed:`);
+              for (const e of validate.errors) console.error(`  ${e.instancePath || '/'} ${e.message}`);
+              failed = true;
+            } else {
+              console.log(`[ok] ${data} matches ${schema}`);
+            }
+          }
+          // Duplicate ids
+          const ix = JSON.parse(fs.readFileSync('index.json', 'utf-8'));
+          const seen = new Set();
+          for (const p of ix.plugins) {
+            if (seen.has(p.id)) {
+              console.error(`::error::duplicate plugin id in index.json: ${p.id}`);
+              failed = true;
+            }
+            seen.add(p.id);
+          }
+          // Yanked ids must exist
+          const yk = JSON.parse(fs.readFileSync('yanked.json', 'utf-8'));
+          for (const y of yk.yanked) {
+            if (!seen.has(y.id)) {
+              console.error(`::error::yanked.json references unknown id: ${y.id}`);
+              failed = true;
+            }
+          }
+          if (failed) process.exit(1);
+          NODE
+
+      - name: Install oras + cosign
+        uses: oras-project/setup-oras@v1
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Login to ghcr.io (read-only)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
+             --username ${{ github.actor }} --password-stdin
+
+      - name: Verify every entry's :latest is signed by the declared identity
+        run: |
+          set -euo pipefail
+          FAILED=0
+          for row in $(jq -c '.plugins[]' index.json); do
+            ID=$(echo "$row" | jq -r .id)
+            REF=$(echo "$row" | jq -r .ref)
+            IDENT=$(echo "$row" | jq -r .trusted_identity)
+            ISSUER=$(echo "$row" | jq -r '.trusted_oidc_issuer // "https://token.actions.githubusercontent.com"')
+
+            # Build the identity regexp by escaping dots in the workflow URL
+            # and appending the canonical @refs/(tags|heads)/.+ suffix. This
+            # matches whatever ref the signing workflow ran on (typically a
+            # tag like v0.1.0).
+            IDENT_ESCAPED=$(printf '%s' "$IDENT" | sed 's/[.[\*^$()+?{|]/\\&/g')
+            IDENT_REGEX="^${IDENT_ESCAPED}@refs/(tags|heads)/.+$"
+
+            echo "─── $ID ─── ref=$REF"
+            echo "  identity regex: $IDENT_REGEX"
+            echo "  issuer:         $ISSUER"
+
+            # Manifest must exist
+            if ! oras manifest fetch "$REF:latest" >/dev/null 2>&1; then
+              echo "::error::manifest not reachable: $REF:latest"
+              FAILED=1
+              continue
+            fi
+            # Signature must verify
+            if ! cosign verify "$REF:latest" \
+                 --certificate-identity-regexp "$IDENT_REGEX" \
+                 --certificate-oidc-issuer "$ISSUER" \
+                 >/dev/null 2>&1; then
+              echo "::error::cosign verify failed for $REF:latest against $IDENT_REGEX"
+              FAILED=1
+              continue
+            fi
+            echo "  ✓ verified"
+          done
+          test $FAILED -eq 0

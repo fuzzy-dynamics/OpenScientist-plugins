@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fuzzy-dynamics/OpenScientist-plugins/schema/index.schema.json",
+  "title": "OpenScientist verified plugin index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "plugins"],
+  "properties": {
+    "$schema":    { "type": "string" },
+    "version":    { "const": 1, "description": "Schema version. Bump only with a coordinated client migration." },
+    "updated_at": { "type": "string", "format": "date" },
+    "plugins":    {
+      "type": "array",
+      "items": { "$ref": "#/$defs/plugin" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "plugin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "publisher", "ref", "trusted_identity", "repository_url", "displayName", "description"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$",
+          "description": "kebab-case slug, 3..40 chars, lowercase, no leading dot"
+        },
+        "publisher":   { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,38}$" },
+        "ref": {
+          "type": "string",
+          "pattern": "^[a-z0-9.-]+(/[a-z0-9._-]+)+$",
+          "description": "OCI repository reference WITHOUT a tag (e.g., ghcr.io/openscientist/marimo)"
+        },
+        "trusted_identity": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://github\\.com/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/\\.github/workflows/[A-Za-z0-9._-]+\\.ya?ml$",
+          "description": "GitHub Actions workflow URL prefix (without @refs/...). The plane-tool client builds a regexp '^<this>@refs/(tags|heads)/.+$' and passes it to `cosign verify --certificate-identity-regexp`. This lets one entry verify signatures from any tag/branch the workflow runs on, without having to PR the index for every release."
+        },
+        "trusted_oidc_issuer": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://token.actions.githubusercontent.com"
+        },
+        "repository_url": { "type": "string", "format": "uri" },
+        "homepage_url":   { "type": "string", "format": "uri" },
+        "displayName":    { "type": "string", "minLength": 1, "maxLength": 60 },
+        "description":    { "type": "string", "minLength": 1, "maxLength": 200 },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$", "maxLength": 24 },
+          "maxItems": 10,
+          "uniqueItems": true
+        },
+        "license": {
+          "type": "string",
+          "description": "SPDX identifier (e.g., MIT, Apache-2.0, GPL-3.0-or-later)"
+        }
+      }
+    }
+  }
+}

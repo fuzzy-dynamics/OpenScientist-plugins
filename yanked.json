@@ -1,0 +1,5 @@
+{
+  "$schema": "./schema/yanked.schema.json",
+  "version": 1,
+  "yanked": []
+}

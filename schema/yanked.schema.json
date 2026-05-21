@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fuzzy-dynamics/OpenScientist-plugins/schema/yanked.schema.json",
+  "title": "OpenScientist yanked-releases list",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "yanked"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "yanked":  {
+      "type": "array",
+      "items": { "$ref": "#/$defs/yank" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "yank": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "reason", "yanked_at"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$",
+          "description": "plugin id from index.json"
+        },
+        "version": {
+          "type": "string",
+          "description": "Exact semver tag or a semver range (e.g., '1.2.0', '<1.3.0', '~1.2.0')"
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["cve", "broken", "compromised", "withdrawn", "deprecated"],
+          "description": "Why this version is being pulled. CVE entries should also link an advisory in `details`."
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "advisory_url": { "type": "string", "format": "uri" },
+        "yanked_at":    { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
