@@ -1,7 +1,7 @@
 {
   "$schema": "./schema/index.schema.json",
   "version": 1,
-  "updated_at": "2026-05-22",
+  "updated_at": "2026-05-25",
   "plugins": [
     {
       "id": "hello-world",
@@ -33,6 +33,22 @@
         "proof",
         "verification",
         "research"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "evolution-tab",
+      "publisher": "MostlyKIGuess",
+      "ref": "ghcr.io/mostlykiguess/evolution-tab",
+      "trusted_identity": "https://github.com/MostlyKIGuess/evolution-tab/.github/workflows/release.yml",
+      "trusted_oidc_issuer": "https://token.actions.githubusercontent.com",
+      "repository_url": "https://github.com/MostlyKIGuess/evolution-tab",
+      "displayName": "Evolution Tab",
+      "description": "Run-aware evolution graph for deep runs: replay, path focus, comparison, and structured steering.",
+      "tags": [
+        "deep-run",
+        "visualization",
+        "steering"
       ],
       "license": "MIT"
     }
